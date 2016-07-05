@@ -25,7 +25,7 @@ td, th {
   position: absolute;
   line-height: 97%;
   top: 0;
-  right: 0;
+  left: 0;
   font-size: 85%;
   max-width: 400px;
   }
@@ -42,11 +42,12 @@ function initialize() {
   var styles = [
     {stylers: [{gamma: 1}]},
     {featureType: "all",                     elementType: "labels",          stylers: [{visibility: "off"}]},
-    {featureType: "road",                    elementType: "geometry",        stylers: [{visibility: "simplified"}, {color: "#0000ff"}]},
-    {featureType: "water",                   elementType: "geometry",        stylers: [{color: "#8888ff"}]},
-    {featureType: "landscape",               elementType: "geometry",        stylers: [{color: "#ffffff"}]},
-    {featureType: "poi",                     elementType: "geometry",        stylers: [{color: "#ffffff"}]},
-    {featureType: "transit.station.airport", elementType: "geometry.fill",   stylers: [{color: "#ffffff"}]}
+    {featureType: "road",                    elementType: "geometry",        stylers: [{visibility: "simplified"}, {color: "#FFFFFF"}]},
+    {featureType: "water",                   elementType: "geometry",        stylers: [{color: "#9A9AFF"}]},
+    {featureType: "transit",                 elementType: "geometry",        stylers: [{color: "#FFFF9A"}]},
+    {featureType: "landscape",               elementType: "geometry",        stylers: [{color: "#9AD9E8"}]},
+    {featureType: "poi",                     elementType: "geometry",        stylers: [{color: "#9AD9E8"}]},
+    {featureType: "transit.station.airport", elementType: "geometry.fill",   stylers: [{color: "#9AD9E8"}]}
     ];
   var mapOptions = {
     zoom: 11,
@@ -54,6 +55,10 @@ function initialize() {
     scrollwheel: false,
     streetViewControl: false,
     mapTypeId: google.maps.MapTypeId.ROADMAP,
+    mapTypeControlOptions: {
+      style: google.maps.MapTypeControlStyle.HORIZONTAL_BAR,
+      position: google.maps.ControlPosition.TOP_RIGHT
+      },
     styles: styles
     }
   map = new google.maps.Map(document.getElementById("map_canvas"), mapOptions);
@@ -87,15 +92,13 @@ function parseResponse(response) {
   var ul = document.getElementById("systemList");
   for (var i = 0; i < feeds.length; i++) {
     console.log(feeds[i].onestop_id)
-
-  var li = document.createElement("li");
-  li.appendChild(document.createTextNode(feeds[i].onestop_id));
-  ul.appendChild(li);
+    var li = document.createElement("li");
+    li.appendChild(document.createTextNode(feeds[i].onestop_id));
+    ul.appendChild(li);
     }
   }
 
 function findTransit() {
-  console.log("???")
   var bounds = map.getBounds();
   var ne = bounds.getNorthEast();
   var sw = bounds.getSouthWest();
@@ -103,7 +106,7 @@ function findTransit() {
   console.log("querying " + url);
   get(url)
     .then(parseResponse,
-          function(error)    {console.error("Failed!", error);});
+          function(error) {console.error("Failed!", error);});
   }
 </script>
 <body>
