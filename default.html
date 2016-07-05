@@ -96,7 +96,12 @@ function parseResponse(response) {
 
 function findTransit() {
   console.log("???")
-  get('https://transit.land/api/v1/feeds?bbox=-122.4183,37.7758,-122.4120,37.7858')
+  var bounds = map.getBounds();
+  var ne = bounds.getNorthEast();
+  var sw = bounds.getSouthWest();
+  var url = "https://transit.land/api/v1/feeds?bbox=" + sw.lng() + "," + sw.lat() + "," + ne.lng() + "," + ne.lat();
+  console.log("querying " + url);
+  get(url)
     .then(parseResponse,
           function(error)    {console.error("Failed!", error);});
   }
