@@ -88,21 +88,44 @@ function get(url) {
 
 function parseResponse(response) {
   var obj = JSON.parse(response);
-  var feeds = obj.feeds;
+  var operators = obj.operators;
   var ul = document.getElementById("systemList");
-  for (var i = 0; i < feeds.length; i++) {
-    console.log(feeds[i].onestop_id)
+  for (var i = 0; i < operators.length; i++) {
+    console.log(operators[i])
+    var id = operators[i].onestop_id;
     var li = document.createElement("li");
-    li.appendChild(document.createTextNode(feeds[i].onestop_id));
+    li.appendChild(document.createTextNode(operators[i].short_name));
     ul.appendChild(li);
+    var checkbox = document.createElement('input');
+    checkbox.type = "checkbox";
+    checkbox.id = id;
+    checkbox.onclick = toggleRoutesFunction(id);
+    var label = document.createElement('label')
+    label.htmlFor = id;
+    label.appendChild(document.createTextNode('routes'));
+    li.appendChild(checkbox);
+    li.appendChild(label);
     }
+  }
+
+function toggleRoutesFunction(id) {
+  return function(event) {
+    if (this.checked) {
+      var url = "http://transit.land/api/v1/routes?operated_by=" + id;
+      console.log("querying " + url);
+      get(url)
+        .then(function(response) {console.error(response);},
+              function(error) {console.error("Failed!", error);});
+      }
+    else console.log(id + " UNCHECKED");
+    };
   }
 
 function findTransit() {
   var bounds = map.getBounds();
   var ne = bounds.getNorthEast();
   var sw = bounds.getSouthWest();
-  var url = "https://transit.land/api/v1/feeds?bbox=" + sw.lng() + "," + sw.lat() + "," + ne.lng() + "," + ne.lat();
+  var url = "https://transit.land/api/v1/operators?bbox=" + sw.lng() + "," + sw.lat() + "," + ne.lng() + "," + ne.lat();
   console.log("querying " + url);
   get(url)
     .then(parseResponse,
