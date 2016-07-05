@@ -20,9 +20,13 @@ ul {
   padding-left: 0;
   list-style: none;
   }
+li {
+  background-color: #FF6565;
+  transition: all 3s ease;
+  }
 #control {
   color: #000000;
-  background-color: rgba(204, 204, 204, 0.8);
+  background-color: rgba(204, 204, 204, 0.67);
   padding: 4px 4px;
   position: absolute;
   line-height: 97%;
@@ -39,6 +43,7 @@ ul {
 <script>
 var map;
 var infowindow;
+var knownOperators = [];
 
 function initialize() {
   var styles = [
@@ -95,18 +100,28 @@ function parseOperators(response) {
   for (var i = 0; i < operators.length; i++) {
     console.log(operators[i])
     var id = operators[i].onestop_id;
-    var li = document.createElement("li");
-    li.appendChild(document.createTextNode(operators[i].short_name));
-    ul.appendChild(li);
-    var checkbox = document.createElement('input');
-    checkbox.type = "checkbox";
-    checkbox.id = id;
-    checkbox.onclick = toggleRoutesFunction(id);
-    var label = document.createElement('label')
-    label.htmlFor = id;
-    label.appendChild(document.createTextNode('routes'));
-    li.appendChild(checkbox);
-    li.appendChild(label);
+    if (knownOperators.indexOf(id) < 0) {  // add new operator!
+      knownOperators.push(id);
+      var li = document.createElement("li");
+      li.id = id + "-li";
+      var operatorName = operators[i].short_name;
+      if (operatorName == null) {
+        operatorName = operators[i].name;
+        }
+      li.appendChild(document.createTextNode(operatorName));
+      ul.appendChild(li);
+      var checkbox = document.createElement('input');
+      checkbox.type = "checkbox";
+      checkbox.id = id;
+      checkbox.onclick = toggleRoutesFunction(id);
+      var label = document.createElement('label')
+      label.htmlFor = id;
+      label.appendChild(document.createTextNode('routes'));
+      li.appendChild(checkbox);
+      li.appendChild(label);
+      window.getComputedStyle(li).backgroundColor;  // ensure default color is set
+      li.style.backgroundColor = "transparent";  // will fade from default color
+      }
     }
   }
 
