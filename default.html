@@ -15,8 +15,10 @@ body {
   padding: 0;
   font-family: verdana, sans-serif;
   }
-td, th {
-  text-align: right;
+ul {
+  margin-left: 0;
+  padding-left: 0;
+  list-style: none;
   }
 #control {
   color: #000000;
@@ -86,7 +88,7 @@ function get(url) {
     });
   }
 
-function parseResponse(response) {
+function parseOperators(response) {
   var obj = JSON.parse(response);
   var operators = obj.operators;
   var ul = document.getElementById("systemList");
@@ -111,23 +113,24 @@ function parseResponse(response) {
 function parseRoutes(response) {
   var obj = JSON.parse(response);
   var routes = obj.routes;
+  console.log(routes.length + " route(s) found");
   for (var i = 0; i < routes.length; i++) {
     var coordinates = routes[i].geometry.coordinates;
-    var polyline = [];
     for (var j = 0; j < coordinates.length; j++) {
       var segment = coordinates[j];
+      var polyline = [];
       for (var k = 0; k < segment.length; k++) {
-      //console.log({lat: segment[j][1], lng: segment[j][0]});
-      polyline.push({lat: segment[j][1], lng: segment[j][0]});
-      var newline = new google.maps.Polyline({
-          path: polyline,
-          geodesic: true,
-          strokeColor: '#FF0000',
-          strokeOpacity: 1.0,
-          strokeWeight: 2,
-          map: map
-        });
+        //console.log({lat: segment[j][1], lng: segment[j][0]});
+        polyline.push({lat: segment[k][1], lng: segment[k][0]});
         }
+      var newline = new google.maps.Polyline({
+        path: polyline,
+        geodesic: true,
+        strokeColor: '#FF6565',
+        strokeOpacity: 1.0,
+        strokeWeight: 2,
+        map: map
+        });
       }
     }
   }
@@ -152,7 +155,7 @@ function findTransit() {
   var url = "https://transit.land/api/v1/operators?bbox=" + sw.lng() + "," + sw.lat() + "," + ne.lng() + "," + ne.lat();
   console.log("querying " + url);
   get(url)
-    .then(parseResponse,
+    .then(parseOperators,
           function(error) {console.error("Failed!", error);});
   }
 </script>
