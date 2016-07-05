@@ -108,13 +108,37 @@ function parseResponse(response) {
     }
   }
 
+function parseRoutes(response) {
+  var obj = JSON.parse(response);
+  var routes = obj.routes;
+  for (var i = 0; i < routes.length; i++) {
+    var coordinates = routes[i].geometry.coordinates;
+    var polyline = [];
+    for (var j = 0; j < coordinates.length; j++) {
+      var segment = coordinates[j];
+      for (var k = 0; k < segment.length; k++) {
+      //console.log({lat: segment[j][1], lng: segment[j][0]});
+      polyline.push({lat: segment[j][1], lng: segment[j][0]});
+      var newline = new google.maps.Polyline({
+          path: polyline,
+          geodesic: true,
+          strokeColor: '#FF0000',
+          strokeOpacity: 1.0,
+          strokeWeight: 2,
+          map: map
+        });
+        }
+      }
+    }
+  }
+
 function toggleRoutesFunction(id) {
   return function(event) {
     if (this.checked) {
       var url = "http://transit.land/api/v1/routes?operated_by=" + id;
       console.log("querying " + url);
       get(url)
-        .then(function(response) {console.error(response);},
+        .then(parseRoutes,
               function(error) {console.error("Failed!", error);});
       }
     else console.log(id + " UNCHECKED");
