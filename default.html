@@ -6,6 +6,7 @@
 <meta name="viewport" content="initial-scale=1.0, user-scalable=no">
 <base target="_blank">
 <!--Copyright © 2016 Michael Schade, http://mvjantzen.com -->
+<!-- https://github.com/mvs202/transitmap -->
 <style type="text/css">
 html {
   height: 100%;
@@ -57,6 +58,7 @@ var map;
 var infowindow;
 var knownOperators = [];
 var operatorInfo = [];
+var routeList = {};
 
 function initialize() {
   var styles = [
@@ -64,7 +66,7 @@ function initialize() {
     {featureType: "all",                     elementType: "labels",          stylers: [{visibility: "off"}]},
     {featureType: "road",                    elementType: "geometry",        stylers: [{visibility: "simplified"}, {color: "#FFFFFF"}]},
     {featureType: "water",                   elementType: "geometry",        stylers: [{color: "#9A9AFF"}]},
-    {featureType: "transit",                 elementType: "geometry",        stylers: [{color: "#FFFF9A"}]},
+    {featureType: "transit",                 elementType: "geometry",        stylers: [{color: "#9AFFFF"}]},
     {featureType: "landscape",               elementType: "geometry",        stylers: [{color: "#9AD9E8"}]},
     {featureType: "poi",                     elementType: "geometry",        stylers: [{color: "#9AD9E8"}]},
     {featureType: "transit.station.airport", elementType: "geometry.fill",   stylers: [{color: "#9AD9E8"}]}
@@ -152,6 +154,7 @@ function parseRoutes(response, operatorObj) {
   operatorObj.polylines = [];
   for (var i = 0; i < routes.length; i++) {
     var coordinates = routes[i].geometry.coordinates;
+    console.log(routes[i].onestop_id)
     for (var j = 0; j < coordinates.length; j++) {
       var segment = coordinates[j];
       var polyline = [];
@@ -162,19 +165,40 @@ function parseRoutes(response, operatorObj) {
         path: polyline,
         geodesic: true,
         strokeColor: '#FF6565',
-        strokeOpacity: 1.0,
+        strokeOpacity: 0.8,
         strokeWeight: 2,
         map: map
         });
       operatorObj.polylines.push(p);
+      routeList[routes[i].onestop_id] = p;
       google.maps.event.addListener(p, 'mouseover', routeInfoFunction(routes[i]));
       }
     }
   }
 
+function highlightRoute(inputTag) {
+  var route = routeList[inputTag.value];
+  if (route) {  // property found
+    if (inputTag.checked) {
+      route.setOptions({strokeColor: '#FFFF65', strokeOpacity: 1.0, strokeWeight: 6});
+      }
+    else {
+      route.setOptions({strokeColor: '#FFF6565', strokeOpacity: 0.8, strokeWeight: 2});
+      }
+    }
+  else {  // route is undefined
+    console.log("Can't find route " + inputTag.value);
+    }
+  }
+
 function routeInfoFunction(route) {
   return function(event) {
-    infowindow.setContent(route.operated_by_name + "<br>" + route.name + " (" + route.vehicle_type + ")");
+    console.log(route)
+    var content =
+      route.operated_by_name + "<br>" +
+      route.name + " (" + route.vehicle_type + ")<br>" +
+      "<label><input type=checkbox value='" + route.onestop_id + "' onclick='highlightRoute(this)'>highlight</label>";
+    infowindow.setContent(content);
     infowindow.setPosition(event.latLng);
     infowindow.open(map);
     }
