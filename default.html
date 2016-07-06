@@ -1,9 +1,10 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>Transit Test</title>
+<title>Demo of transit.land API</title>
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 <meta name="viewport" content="initial-scale=1.0, user-scalable=no">
+<base target="_blank">
 <!--Copyright © 2016 Michael Schade, http://mvjantzen.com -->
 <style type="text/css">
 html {
@@ -26,6 +27,14 @@ li {
   }
 label {
   color: #656565;
+  }
+a {
+  color: #000000;
+  text-decoration: none;
+  transition: all 0.5s ease;
+  }
+a:hover {
+  background-color: #FFFFFF;
   }
 #control {
   color: #000000;
@@ -61,6 +70,7 @@ function initialize() {
     {featureType: "transit.station.airport", elementType: "geometry.fill",   stylers: [{color: "#9AD9E8"}]}
     ];
   var mapOptions = {
+    center: new google.maps.LatLng(38.8895, -77.0352),
     zoom: 11,
     panControl: false,
     scrollwheel: false,
@@ -73,12 +83,7 @@ function initialize() {
     styles: styles
     }
   map = new google.maps.Map(document.getElementById("map_canvas"), mapOptions);
-  map.setCenter(new google.maps.LatLng(38.889805, -77.036560));
-  var bounds = new google.maps.LatLngBounds();
-  bounds.extend(new google.maps.LatLng(38.88599, -77.15629));  // EFC
-  bounds.extend(new google.maps.LatLng(38.89660, -77.07146));  // Rosslyn
   infowindow = new google.maps.InfoWindow({disableAutoPan: true});
-  map.fitBounds(bounds);
   document.getElementById('control').onmouseover = function() {infowindow.close();};
   }
 
@@ -102,7 +107,6 @@ function parseOperators(response) {
   var operators = obj.operators;
   var ul = document.getElementById("systemList");
   for (var i = 0; i < operators.length; i++) {
-    console.log(operators[i])
     var id = operators[i].onestop_id;
     if (knownOperators.indexOf(id) < 0) {  // add new operator!
       knownOperators.push(id);
@@ -133,6 +137,7 @@ function parseOperators(response) {
       checkbox.onclick = toggleRoutesFunction(operatorObj);
       }
     }
+  document.getElementById("button").disabled = false;
   }
 
 function parseRoutes(response, operatorObj) {
@@ -151,21 +156,29 @@ function parseRoutes(response, operatorObj) {
       var segment = coordinates[j];
       var polyline = [];
       for (var k = 0; k < segment.length; k++) {
-        //console.log({lat: segment[j][1], lng: segment[j][0]});
         polyline.push({lat: segment[k][1], lng: segment[k][0]});
         }
-      operatorObj.polylines.push(new google.maps.Polyline({
+      var p = new google.maps.Polyline({
         path: polyline,
         geodesic: true,
         strokeColor: '#FF6565',
         strokeOpacity: 1.0,
         strokeWeight: 2,
         map: map
-        }));
+        });
+      operatorObj.polylines.push(p);
+      google.maps.event.addListener(p, 'mouseover', routeInfoFunction(routes[i]));
       }
     }
   }
 
+function routeInfoFunction(route) {
+  return function(event) {
+    infowindow.setContent(route.operated_by_name + "<br>" + route.name + " (" + route.vehicle_type + ")");
+    infowindow.setPosition(event.latLng);
+    infowindow.open(map);
+    }
+  }
 function toggleRoutesFunction(operatorObj) {
   return function(event) {
     if (this.checked) {
@@ -179,7 +192,8 @@ function toggleRoutesFunction(operatorObj) {
         var url = "http://transit.land/api/v1/routes?operated_by=" + operatorObj.id + "&per_page=1000";
         console.log("querying " + url);
         get(url)
-          .then(function(response) {parseRoutes(response, operatorObj);},
+          .then(function(response) {
+            operatorObj.routeButtonLabel.nodeValue = "drawing...";parseRoutes(response, operatorObj);},
                 function(error)    {console.error("Failed!", error);});
         }
       }
@@ -192,6 +206,7 @@ function toggleRoutesFunction(operatorObj) {
   }
 
 function findTransit() {
+  document.getElementById("button").disabled = true;
   var bounds = map.getBounds();
   var ne = bounds.getNorthEast();
   var sw = bounds.getSouthWest();
@@ -199,13 +214,17 @@ function findTransit() {
   console.log("querying " + url);
   get(url)
     .then(parseOperators,
-          function(error) {console.error("Failed!", error);});
+          function(error) {
+            document.getElementById("button").disabled = false;
+            console.error("Failed!", error);
+            });
   }
 </script>
 <body>
 <div id=map_canvas ></div>
 <div id=control >
-  <button onclick="findTransit()">Find transit operators in map</button><br>
+  Demo of <a href="https://transit.land/">transit.land</a> API<br>
+  <button id="button" onclick="findTransit()">Find transit operators in map</button><br>
   <ul id="systemList"></ul>
   </div>
 <script src="https://maps.googleapis.com/maps/api/js?callback=initialize" async defer></script>
