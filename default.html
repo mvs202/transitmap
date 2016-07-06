@@ -21,7 +21,7 @@ ul {
   list-style: none;
   }
 li {
-  background-color: #FF6565;
+  background-color: #FFFFFF;
   transition: all 3s ease;
   }
 #control {
@@ -44,6 +44,7 @@ li {
 var map;
 var infowindow;
 var knownOperators = [];
+var operatorInfo = [];
 
 function initialize() {
   var styles = [
@@ -113,22 +114,32 @@ function parseOperators(response) {
       var checkbox = document.createElement('input');
       checkbox.type = "checkbox";
       checkbox.id = id;
-      checkbox.onclick = toggleRoutesFunction(id);
       var label = document.createElement('label')
       label.htmlFor = id;
-      label.appendChild(document.createTextNode('routes'));
+      var routeButtonLabel = document.createTextNode('routes')
+      checkbox.onclick = toggleRoutesFunction(id, routeButtonLabel);
+      label.appendChild(routeButtonLabel);
       li.appendChild(checkbox);
       li.appendChild(label);
       window.getComputedStyle(li).backgroundColor;  // ensure default color is set
       li.style.backgroundColor = "transparent";  // will fade from default color
+      operatorInfo.push({
+        id: id,
+        routeButtonLabel: routeButtonLabel
+        });
       }
     }
   }
 
-function parseRoutes(response) {
+function parseRoutes(response, routeButtonLabel) {
   var obj = JSON.parse(response);
   var routes = obj.routes;
-  console.log(routes.length + " route(s) found");
+  if (routes.length == 1) {
+    routeButtonLabel.nodeValue = "1 route";
+    }
+  else {
+    routeButtonLabel.nodeValue = routes.length + " routes";
+    }
   for (var i = 0; i < routes.length; i++) {
     var coordinates = routes[i].geometry.coordinates;
     for (var j = 0; j < coordinates.length; j++) {
@@ -150,16 +161,19 @@ function parseRoutes(response) {
     }
   }
 
-function toggleRoutesFunction(id) {
+function toggleRoutesFunction(id, routeButtonLabel) {
   return function(event) {
     if (this.checked) {
+      routeButtonLabel.nodeValue = "waiting...";
       var url = "http://transit.land/api/v1/routes?operated_by=" + id;
       console.log("querying " + url);
       get(url)
-        .then(parseRoutes,
-              function(error) {console.error("Failed!", error);});
+        .then(function(response) {parseRoutes(response, routeButtonLabel);},
+              function(error)    {console.error("Failed!", error);});
       }
-    else console.log(id + " UNCHECKED");
+    else {
+      console.log(id + " UNCHECKED");
+      }
     };
   }
 
@@ -177,7 +191,7 @@ function findTransit() {
 <body>
 <div id=map_canvas ></div>
 <div id=control >
-  <button onclick="findTransit()">Find Transit</button><br>
+  <button onclick="findTransit()">Find transit operators in map</button><br>
   <ul id="systemList"></ul>
   </div>
 <script src="https://maps.googleapis.com/maps/api/js?callback=initialize" async defer></script>
