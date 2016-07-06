@@ -24,6 +24,9 @@ li {
   background-color: #FFFFFF;
   transition: all 3s ease;
   }
+label {
+  color: #656565;
+  }
 #control {
   color: #000000;
   background-color: rgba(204, 204, 204, 0.67);
@@ -166,12 +169,19 @@ function parseRoutes(response, operatorObj) {
 function toggleRoutesFunction(operatorObj) {
   return function(event) {
     if (this.checked) {
-      operatorObj.routeButtonLabel.nodeValue = "waiting...";
-      var url = "http://transit.land/api/v1/routes?operated_by=" + operatorObj.id;
-      console.log("querying " + url);
-      get(url)
-        .then(function(response) {parseRoutes(response, operatorObj);},
-              function(error)    {console.error("Failed!", error);});
+      if (operatorObj.polylines) {
+        for (var i = 0; i < operatorObj.polylines.length; i++) {
+          operatorObj.polylines[i].setMap(map);
+          }
+        }
+      else {
+        operatorObj.routeButtonLabel.nodeValue = "waiting...";
+        var url = "http://transit.land/api/v1/routes?operated_by=" + operatorObj.id;
+        console.log("querying " + url);
+        get(url)
+          .then(function(response) {parseRoutes(response, operatorObj);},
+                function(error)    {console.error("Failed!", error);});
+        }
       }
     else {
       for (var i = 0; i < operatorObj.polylines.length; i++) {
