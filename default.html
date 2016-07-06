@@ -116,30 +116,32 @@ function parseOperators(response) {
       checkbox.id = id;
       var label = document.createElement('label')
       label.htmlFor = id;
-      var routeButtonLabel = document.createTextNode('routes')
-      checkbox.onclick = toggleRoutesFunction(id, routeButtonLabel);
+      var routeButtonLabel = document.createTextNode('routes');
       label.appendChild(routeButtonLabel);
       li.appendChild(checkbox);
       li.appendChild(label);
       window.getComputedStyle(li).backgroundColor;  // ensure default color is set
       li.style.backgroundColor = "transparent";  // will fade from default color
-      operatorInfo.push({
+      var operatorObj = {
         id: id,
         routeButtonLabel: routeButtonLabel
-        });
+        };
+      operatorInfo.push(operatorObj);  // need to store in array...?  :P
+      checkbox.onclick = toggleRoutesFunction(operatorObj);
       }
     }
   }
 
-function parseRoutes(response, routeButtonLabel) {
+function parseRoutes(response, operatorObj) {
   var obj = JSON.parse(response);
   var routes = obj.routes;
   if (routes.length == 1) {
-    routeButtonLabel.nodeValue = "1 route";
+    operatorObj.routeButtonLabel.nodeValue = "1 route";
     }
   else {
-    routeButtonLabel.nodeValue = routes.length + " routes";
+    operatorObj.routeButtonLabel.nodeValue = routes.length + " routes";
     }
+  operatorObj.polylines = [];
   for (var i = 0; i < routes.length; i++) {
     var coordinates = routes[i].geometry.coordinates;
     for (var j = 0; j < coordinates.length; j++) {
@@ -149,30 +151,32 @@ function parseRoutes(response, routeButtonLabel) {
         //console.log({lat: segment[j][1], lng: segment[j][0]});
         polyline.push({lat: segment[k][1], lng: segment[k][0]});
         }
-      var newline = new google.maps.Polyline({
+      operatorObj.polylines.push(new google.maps.Polyline({
         path: polyline,
         geodesic: true,
         strokeColor: '#FF6565',
         strokeOpacity: 1.0,
         strokeWeight: 2,
         map: map
-        });
+        }));
       }
     }
   }
 
-function toggleRoutesFunction(id, routeButtonLabel) {
+function toggleRoutesFunction(operatorObj) {
   return function(event) {
     if (this.checked) {
-      routeButtonLabel.nodeValue = "waiting...";
-      var url = "http://transit.land/api/v1/routes?operated_by=" + id;
+      operatorObj.routeButtonLabel.nodeValue = "waiting...";
+      var url = "http://transit.land/api/v1/routes?operated_by=" + operatorObj.id;
       console.log("querying " + url);
       get(url)
-        .then(function(response) {parseRoutes(response, routeButtonLabel);},
+        .then(function(response) {parseRoutes(response, operatorObj);},
               function(error)    {console.error("Failed!", error);});
       }
     else {
-      console.log(id + " UNCHECKED");
+      for (var i = 0; i < operatorObj.polylines.length; i++) {
+        operatorObj.polylines[i].setMap(null);
+        }
       }
     };
   }
