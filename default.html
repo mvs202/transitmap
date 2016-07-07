@@ -57,8 +57,8 @@ a:hover {
 var map;
 var infowindow;
 var knownOperators = [];
-var operatorInfo = [];
-var routeList = {};
+var operatorList = {};  // associative array, indexed by "onestop_id" for operators
+var routeList = {};  // associative array, indexed by "onestop_id" for routes
 
 function initialize() {
   var styles = [
@@ -131,12 +131,10 @@ function parseOperators(response) {
       li.appendChild(label);
       window.getComputedStyle(li).backgroundColor;  // ensure default color is set
       li.style.backgroundColor = "transparent";  // will fade from default color
-      var operatorObj = {
-        id: id,
+      checkbox.onclick = toggleOperatorFunction(id);
+      operatorList[id] = {
         routeButtonLabel: routeButtonLabel
         };
-      operatorInfo.push(operatorObj);  // need to store in array...?  :P
-      checkbox.onclick = toggleRoutesFunction(operatorObj);
       }
     }
   document.getElementById("button").disabled = false;
@@ -153,8 +151,8 @@ function parseRoutes(response, operatorObj) {
     }
   operatorObj.polylines = [];
   for (var i = 0; i < routes.length; i++) {
+    var routesArray = [];
     var coordinates = routes[i].geometry.coordinates;
-    console.log(routes[i].onestop_id)
     for (var j = 0; j < coordinates.length; j++) {
       var segment = coordinates[j];
       var polyline = [];
@@ -169,22 +167,30 @@ function parseRoutes(response, operatorObj) {
         strokeWeight: 2,
         map: map
         });
+      routesArray.push(p);
       operatorObj.polylines.push(p);
-      routeList[routes[i].onestop_id] = p;
       google.maps.event.addListener(p, 'mouseover', routeInfoFunction(routes[i]));
       }
+    routeList[routes[i].onestop_id] = {
+      routes: routesArray,
+      highlighted: false
+      };
     }
   }
 
 function highlightRoute(inputTag) {
-  var route = routeList[inputTag.value];
-  if (route) {  // property found
+  var polyline = routeList[inputTag.value];
+  if (polyline) {  // property found
     if (inputTag.checked) {
-      route.setOptions({strokeColor: '#FFFF65', strokeOpacity: 1.0, strokeWeight: 6});
+      var options = {strokeColor: '#FFFF65', strokeOpacity: 1.0, strokeWeight: 6};
       }
     else {
-      route.setOptions({strokeColor: '#FFF6565', strokeOpacity: 0.8, strokeWeight: 2});
+      var options = {strokeColor: '#FF6565', strokeOpacity: 0.8, strokeWeight: 2};
       }
+    for (var i = 0; i < polyline.routes.length; i++) {
+      polyline.routes[i].setOptions(options);
+      }
+    polyline.highlighted = inputTag.checked;
     }
   else {  // route is undefined
     console.log("Can't find route " + inputTag.value);
@@ -193,27 +199,35 @@ function highlightRoute(inputTag) {
 
 function routeInfoFunction(route) {
   return function(event) {
-    console.log(route)
+    var polyline = routeList[route.onestop_id];
+    if (polyline && polyline.highlighted) {
+      var isChecked = "checked ";
+      }
+    else {
+      var isChecked = "";
+      }
     var content =
       route.operated_by_name + "<br>" +
       route.name + " (" + route.vehicle_type + ")<br>" +
-      "<label><input type=checkbox value='" + route.onestop_id + "' onclick='highlightRoute(this)'>highlight</label>";
+      "<label><input type=checkbox " + isChecked + "value='" + route.onestop_id + "' onclick='highlightRoute(this)'>highlight</label>";
     infowindow.setContent(content);
     infowindow.setPosition(event.latLng);
     infowindow.open(map);
     }
   }
-function toggleRoutesFunction(operatorObj) {
+
+function toggleOperatorFunction(id) {
   return function(event) {
+    var operatorObj = operatorList[id];
     if (this.checked) {
-      if (operatorObj.polylines) {
+      if (operatorObj.polylines) {  // show routes
         for (var i = 0; i < operatorObj.polylines.length; i++) {
           operatorObj.polylines[i].setMap(map);
           }
         }
-      else {
+      else {  // find and display routes
         operatorObj.routeButtonLabel.nodeValue = "waiting...";
-        var url = "http://transit.land/api/v1/routes?operated_by=" + operatorObj.id + "&per_page=1000";
+        var url = "http://transit.land/api/v1/routes?operated_by=" + id + "&per_page=1000";
         console.log("querying " + url);
         get(url)
           .then(function(response) {
@@ -221,12 +235,12 @@ function toggleRoutesFunction(operatorObj) {
                 function(error)    {console.error("Failed!", error);});
         }
       }
-    else {
+    else {  // hide routes
       for (var i = 0; i < operatorObj.polylines.length; i++) {
         operatorObj.polylines[i].setMap(null);
         }
       }
-    };
+    }
   }
 
 function findTransit() {
