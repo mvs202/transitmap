@@ -153,11 +153,15 @@ function parseRoutes(response, operatorObj) {
   for (var i = 0; i < routes.length; i++) {
     var routesArray = [];
     var coordinates = routes[i].geometry.coordinates;
+    var bounds = new google.maps.LatLngBounds();
     for (var j = 0; j < coordinates.length; j++) {
       var segment = coordinates[j];
       var polyline = [];
       for (var k = 0; k < segment.length; k++) {
-        polyline.push({lat: segment[k][1], lng: segment[k][0]});
+        var lat = segment[k][1];
+        var lng = segment[k][0];
+        polyline.push({lat: lat, lng: lng});
+        bounds.extend(new google.maps.LatLng(lat, lng));
         }
       var p = new google.maps.Polyline({
         path: polyline,
@@ -173,6 +177,7 @@ function parseRoutes(response, operatorObj) {
       }
     routeList[routes[i].onestop_id] = {
       routes: routesArray,
+      bounds: bounds,
       highlighted: false
       };
     }
@@ -209,11 +214,18 @@ function routeInfoFunction(route) {
     var content =
       route.operated_by_name + "<br>" +
       route.name + " (" + route.vehicle_type + ")<br>" +
-      "<label><input type=checkbox " + isChecked + "value='" + route.onestop_id + "' onclick='highlightRoute(this)'>highlight</label>";
+      "<label><input type=checkbox " + isChecked + "value='" + route.onestop_id + "' onclick='highlightRoute(this)'>highlight</label><br>" +
+      "<button onclick=zoomToRoute('" + route.onestop_id + "')>zoom to route</button>";
+    console.log(content)
     infowindow.setContent(content);
     infowindow.setPosition(event.latLng);
     infowindow.open(map);
     }
+  }
+
+function zoomToRoute(routeID) {
+  console.log(routeID)
+  map.fitBounds(routeList[routeID].bounds);
   }
 
 function toggleOperatorFunction(id) {
