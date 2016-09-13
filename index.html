@@ -215,8 +215,8 @@ function routeInfoFunction(route) {
       route.operated_by_name + "<br>" +
       route.name + " (" + route.vehicle_type + ")<br>" +
       "<label><input type=checkbox " + isChecked + "value='" + route.onestop_id + "' onclick='highlightRoute(this)'>highlight</label><br>" +
+      "<label><input type=checkbox >show stops</label><br>" +
       "<button onclick=zoomToRoute('" + route.onestop_id + "')>zoom to route</button>";
-    console.log(content)
     infowindow.setContent(content);
     infowindow.setPosition(event.latLng);
     infowindow.open(map);
@@ -224,7 +224,6 @@ function routeInfoFunction(route) {
   }
 
 function zoomToRoute(routeID) {
-  console.log(routeID)
   map.fitBounds(routeList[routeID].bounds);
   }
 
@@ -277,6 +276,6 @@ function findTransit() {
   <button id="button" onclick="findTransit()">Find transit operators in map</button><br>
   <ul id="systemList"></ul>
   </div>
-<script src="https://maps.googleapis.com/maps/api/js?callback=initialize" async defer></script>
+<script src="https://maps.googleapis.com/maps/api/js?callback=initialize&key=AIzaSyAC2Gly8X2mFKSRkUrwLKMWQvUYS54QhsA" async defer></script>
 </body>
 </html>
