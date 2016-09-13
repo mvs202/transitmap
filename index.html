@@ -90,7 +90,10 @@ function initialize() {
   var geoSuccess = function(position) {
     map.setCenter(new google.maps.LatLng(position.coords.latitude, position.coords.longitude));
     };
-  navigator.geolocation.getCurrentPosition(geoSuccess);
+  var geoError = function(error) {
+    console.log('getCurrentPosition error #' + error.code);
+    };
+  navigator.geolocation.getCurrentPosition(geoSuccess, geoError);
   }
 
 function get(url) {
