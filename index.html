@@ -281,8 +281,10 @@ function findTransit() {
 
 function removeUnchecked() {
   var ul = document.getElementById("systemList");
-  for (var i = 0; i < operatorList.length; i++) {
+  for (var i = operatorList.length - 1; i >= 0; i--) {
     if (!operatorList[i].checkbox.checked) {
+      ul.removeChild(operatorList[i].li);
+      operatorList.splice(i, 1);  // remove this element from the array
       }
     }
   }
