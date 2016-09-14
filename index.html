@@ -140,6 +140,8 @@ function parseOperators(response) {
       li.style.backgroundColor = "transparent";  // will fade from default color
       checkbox.onclick = toggleOperatorFunction(id);
       operatorList[id] = {
+        li: li,
+        checkbox: checkbox,
         routeButtonLabel: routeButtonLabel
         };
       }
@@ -246,7 +248,7 @@ function toggleOperatorFunction(id) {
         }
       else {  // find and display routes
         operatorObj.routeButtonLabel.nodeValue = "waiting...";
-        var url = "http://transit.land/api/v1/routes?operated_by=" + id + "&per_page=1000";
+        var url = "https://transit.land/api/v1/routes?operated_by=" + id + "&per_page=1000";
         console.log("querying " + url);
         get(url)
           .then(function(response) {
@@ -275,6 +277,14 @@ function findTransit() {
             document.getElementById("find").disabled = false;
             console.error("Failed!", error);
             });
+  }
+
+function removeUnchecked() {
+  var ul = document.getElementById("systemList");
+  for (var i = 0; i < operatorList.length; i++) {
+    if (!operatorList[i].checkbox.checked) {
+      }
+    }
   }
 </script>
 <body>
