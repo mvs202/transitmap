@@ -144,7 +144,8 @@ function parseOperators(response) {
         };
       }
     }
-  document.getElementById("button").disabled = false;
+  document.getElementById("find").disabled = false;
+  document.getElementById("remove").disabled = false;
   }
 
 function parseRoutes(response, operatorObj) {
@@ -262,7 +263,7 @@ function toggleOperatorFunction(id) {
   }
 
 function findTransit() {
-  document.getElementById("button").disabled = true;
+  document.getElementById("find").disabled = true;
   var bounds = map.getBounds();
   var ne = bounds.getNorthEast();
   var sw = bounds.getSouthWest();
@@ -271,7 +272,7 @@ function findTransit() {
   get(url)
     .then(parseOperators,
           function(error) {
-            document.getElementById("button").disabled = false;
+            document.getElementById("find").disabled = false;
             console.error("Failed!", error);
             });
   }
@@ -280,7 +281,8 @@ function findTransit() {
 <div id=map_canvas ></div>
 <div id=control >
   Demo of <a href="https://transit.land/">transit.land</a> API<br>
-  <button id="button" onclick="findTransit()">Find transit operators in map</button><br>
+  <button id="find" onclick="findTransit()">Find transit operators</button>
+  <button id="remove" onclick="removeUnchecked()" disabled>Remove unchecked</button><br>
   <ul id="systemList"></ul>
   </div>
 <script src="https://maps.googleapis.com/maps/api/js?callback=initialize&key=AIzaSyAC2Gly8X2mFKSRkUrwLKMWQvUYS54QhsA" async defer></script>
