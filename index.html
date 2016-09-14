@@ -140,6 +140,7 @@ function parseOperators(response) {
       li.style.backgroundColor = "transparent";  // will fade from default color
       checkbox.onclick = toggleOperatorFunction(id);
       operatorList[id] = {
+        id: id,
         li: li,
         checkbox: checkbox,
         routeButtonLabel: routeButtonLabel
@@ -283,8 +284,9 @@ function removeUnchecked() {
   var ul = document.getElementById("systemList");
   for (var id in operatorList) {
     if (operatorList.hasOwnProperty(id) && !operatorList[id].checkbox.checked) {
-      ul.removeChild(operatorList[id].li);
-      delete operatorList[id];  // remove this element from the list
+      ul.removeChild(operatorList[id].li);  // remove from <UL> element
+      knownOperators.splice(knownOperators.indexOf(operatorList[id].id), 1);  // remove from array
+      delete operatorList[id];  // remove from object
       }
     }
   }
