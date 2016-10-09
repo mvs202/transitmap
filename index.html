@@ -140,9 +140,6 @@ function parseOperators(response) {
       li.style.backgroundColor = "transparent";  // will fade from default color
       checkbox.onclick = toggleOperatorFunction(id);
       operatorList[id] = {
-        id: id,
-        li: li,
-        checkbox: checkbox,
         routeButtonLabel: routeButtonLabel
         };
       }
@@ -189,7 +186,8 @@ function parseRoutes(response, operatorObj) {
     routeList[routes[i].onestop_id] = {
       routes: routesArray,
       bounds: bounds,
-      highlighted: false
+      highlighted: false,
+      stops: null
       };
     }
   }
@@ -213,6 +211,48 @@ function highlightRoute(inputTag) {
     }
   }
 
+function parseStops(polyline, response) {
+  var obj = JSON.parse(response);
+  var stops = obj.stops;
+  polyline.stops = [];
+  console.log(stops);
+  for (var i = 0; i < stops.length; i++) {
+    var coordinates = stops[i].geometry.coordinates;
+    var pin = {name: stops[i].name, lat: coordinates[1], lng: coordinates[0]};
+    pin.marker = new google.maps.Marker({
+      position: new google.maps.LatLng(pin.lat, pin.lng),
+      map: map,
+      title: pin.name
+      });
+    polyline.stops.push(pin);
+    }
+  }
+
+function showStops(inputTag) {
+  console.log(inputTag)
+  var polyline = routeList[inputTag.value];
+  console.log(polyline)
+  if (polyline) {  // property found
+    if (polyline.stops) {
+      // toggle display of stops on route
+      }
+    else {
+      // query API to retrieve list of stops for route
+      var url = "http://transit.land/api/v1/stops?served_by=" + inputTag.value + "&per_page=1000";
+      console.log("querying " + url);
+      get(url).then(
+        function(response) {
+          parseStops(polyline, response);
+          },
+        function(error)    {console.error("Failed!", error);}
+        );
+      }
+    }
+  else {  // route is undefined
+    console.log("Can't find route " + inputTag.value);
+    }
+  }
+
 function routeInfoFunction(route) {
   return function(event) {
     var polyline = routeList[route.onestop_id];
@@ -226,7 +266,7 @@ function routeInfoFunction(route) {
       route.operated_by_name + "<br>" +
       route.name + " (" + route.vehicle_type + ")<br>" +
       "<label><input type=checkbox " + isChecked + "value='" + route.onestop_id + "' onclick='highlightRoute(this)'>highlight</label><br>" +
-      "<label><input type=checkbox >show stops</label><br>" +
+      "<label><input type=checkbox value='" + route.onestop_id + "' onclick='showStops(this)''>show stops</label><br>" +
       "<button onclick=zoomToRoute('" + route.onestop_id + "')>zoom to route</button>";
     infowindow.setContent(content);
     infowindow.setPosition(event.latLng);
@@ -249,12 +289,16 @@ function toggleOperatorFunction(id) {
         }
       else {  // find and display routes
         operatorObj.routeButtonLabel.nodeValue = "waiting...";
-        var url = "https://transit.land/api/v1/routes?operated_by=" + id + "&per_page=1000";
+        var url = "http://transit.land/api/v1/routes?operated_by=" + id + "&per_page=1000";
         console.log("querying " + url);
         get(url)
-          .then(function(response) {
-            operatorObj.routeButtonLabel.nodeValue = "drawing...";parseRoutes(response, operatorObj);},
-                function(error)    {console.error("Failed!", error);});
+          .then(
+            function(response) {
+              operatorObj.routeButtonLabel.nodeValue = "drawing...";
+              parseRoutes(response, operatorObj);
+              },
+            function(error)    {console.error("Failed!", error);}
+            );
         }
       }
     else {  // hide routes
@@ -278,17 +322,6 @@ function findTransit() {
             document.getElementById("find").disabled = false;
             console.error("Failed!", error);
             });
-  }
-
-function removeUnchecked() {
-  var ul = document.getElementById("systemList");
-  for (var id in operatorList) {
-    if (operatorList.hasOwnProperty(id) && !operatorList[id].checkbox.checked) {
-      ul.removeChild(operatorList[id].li);  // remove from <UL> element
-      knownOperators.splice(knownOperators.indexOf(operatorList[id].id), 1);  // remove from array
-      delete operatorList[id];  // remove from object
-      }
-    }
   }
 </script>
 <body>
