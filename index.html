@@ -215,7 +215,6 @@ function parseStops(polyline, response) {
   var obj = JSON.parse(response);
   var stops = obj.stops;
   polyline.stops = [];
-  console.log(stops);
   for (var i = 0; i < stops.length; i++) {
     var coordinates = stops[i].geometry.coordinates;
     var pin = {name: stops[i].name, lat: coordinates[1], lng: coordinates[0]};
@@ -229,12 +228,15 @@ function parseStops(polyline, response) {
   }
 
 function showStops(inputTag) {
-  console.log(inputTag)
   var polyline = routeList[inputTag.value];
-  console.log(polyline)
   if (polyline) {  // property found
     if (polyline.stops) {
       // toggle display of stops on route
+      if (inputTag.checked) {var m = map;}
+      else                  {var m = null;}
+      for (var i = 0; i < polyline.stops.length; i++) {
+        polyline.stops[i].marker.setMap(m);
+        }
       }
     else {
       // query API to retrieve list of stops for route
@@ -257,16 +259,22 @@ function routeInfoFunction(route) {
   return function(event) {
     var polyline = routeList[route.onestop_id];
     if (polyline && polyline.highlighted) {
-      var isChecked = "checked ";
+      var highlightIsChecked = "checked ";
       }
     else {
-      var isChecked = "";
+      var highlightIsChecked = "";
+      }
+    if (polyline && polyline.stops && polyline.stops[0].marker.getMap()) {
+      var showstopsIsChecked = "checked ";
+      }
+    else {
+      var showstopsIsChecked = "";
       }
     var content =
       route.operated_by_name + "<br>" +
       route.name + " (" + route.vehicle_type + ")<br>" +
-      "<label><input type=checkbox " + isChecked + "value='" + route.onestop_id + "' onclick='highlightRoute(this)'>highlight</label><br>" +
-      "<label><input type=checkbox value='" + route.onestop_id + "' onclick='showStops(this)''>show stops</label><br>" +
+      "<label><input type=checkbox " + highlightIsChecked + "value='" + route.onestop_id + "' onclick='highlightRoute(this)'>highlight</label><br>" +
+      "<label><input type=checkbox " + showstopsIsChecked + "value='" + route.onestop_id + "' onclick='showStops(this)''>show stops</label><br>" +
       "<button onclick=zoomToRoute('" + route.onestop_id + "')>zoom to route</button>";
     infowindow.setContent(content);
     infowindow.setPosition(event.latLng);
