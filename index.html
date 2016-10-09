@@ -224,6 +224,12 @@ function parseStops(polyline, response) {
       map: map,
       title: pin.name
       });
+    var routes_serving_stop = stops[i].routes_serving_stop;
+    var routes = [];
+    for (var j = 0; j < routes_serving_stop.length; j++) {
+      routes.push(routes_serving_stop[j].operator_name + ": " + routes_serving_stop[j].route_name);
+      }
+    pin.routes = routes;
     google.maps.event.addListener(pin.marker, 'mouseover', stopInfoFunction(pin));
     polyline.stops.push(pin);
     }
@@ -258,11 +264,16 @@ function showStops(inputTag) {
   }
 
 function stopInfoFunction(stop) {
-  //console.log(stop)
   return function() {
-    var streetview = "https://maps.googleapis.com/maps/api/streetview?size=320x160&location=" +
+    var streetview = "https://maps.googleapis.com/maps/api/streetview?size=384x128&location=" +
       stop.lat + "," + stop.lng + "&fov=120&key=AIzaSyAC2Gly8X2mFKSRkUrwLKMWQvUYS54QhsA";
-    var content = stop.name + "<p><img src='" + streetview + "' width=320 height=160 >"
+    var routesUL = "<ul>";
+    for (var i = 0; i < stop.routes.length; i++) {
+      routesUL += "<li>&#9658; " + stop.routes[i] + "</li>";
+      }
+    routesUL += "</ul>";
+    if (stop.routes.length > 1) console.log(stop.name + ": " + stop.routes.length)
+    var content = "<b>" + stop.name + "</b><p>" + routesUL + "<p><img src='" + streetview + "' width=384 height=128 >"
     infowindow.setContent(content);
     infowindow.setOptions({pixelOffset: new google.maps.Size(0, -40)});
     infowindow.setPosition(stop.marker.getPosition());
