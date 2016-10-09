@@ -220,9 +220,11 @@ function parseStops(polyline, response) {
     var pin = {name: stops[i].name, lat: coordinates[1], lng: coordinates[0]};
     pin.marker = new google.maps.Marker({
       position: new google.maps.LatLng(pin.lat, pin.lng),
+      opacity: 0.8,
       map: map,
       title: pin.name
       });
+    google.maps.event.addListener(pin.marker, 'mouseover', stopInfoFunction(pin));
     polyline.stops.push(pin);
     }
   }
@@ -255,8 +257,21 @@ function showStops(inputTag) {
     }
   }
 
+function stopInfoFunction(stop) {
+  //console.log(stop)
+  return function() {
+    var streetview = "https://maps.googleapis.com/maps/api/streetview?size=320x160&location=" +
+      stop.lat + "," + stop.lng + "&fov=120&key=AIzaSyAC2Gly8X2mFKSRkUrwLKMWQvUYS54QhsA";
+    var content = stop.name + "<p><img src='" + streetview + "' width=320 height=160 >"
+    infowindow.setContent(content);
+    infowindow.setOptions({pixelOffset: new google.maps.Size(0, -40)});
+    infowindow.setPosition(stop.marker.getPosition());
+    infowindow.open(map);
+    }
+  }
+
 function routeInfoFunction(route) {
-  return function(event) {
+  return function(event) {  // event will show mouse location
     var polyline = routeList[route.onestop_id];
     if (polyline && polyline.highlighted) {
       var highlightIsChecked = "checked ";
@@ -277,6 +292,7 @@ function routeInfoFunction(route) {
       "<label><input type=checkbox " + showstopsIsChecked + "value='" + route.onestop_id + "' onclick='showStops(this)''>show stops</label><br>" +
       "<button onclick=zoomToRoute('" + route.onestop_id + "')>zoom to route</button>";
     infowindow.setContent(content);
+    infowindow.setOptions({pixelOffset: new google.maps.Size(0, 0)});
     infowindow.setPosition(event.latLng);
     infowindow.open(map);
     }
