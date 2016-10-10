@@ -112,6 +112,7 @@ function get(url) {
   }
 
 function parseOperators(response) {
+  // display new operators for the current viewport
   var obj = JSON.parse(response);
   var operators = obj.operators;
   var ul = document.getElementById("systemList");
@@ -158,6 +159,7 @@ function parseRoutes(response, operatorObj) {
     operatorObj.routeButtonLabel.nodeValue = routes.length + " routes";
     }
   operatorObj.polylines = [];
+  operatorObj.routeObjs = [];
   for (var i = 0; i < routes.length; i++) {
     var routesArray = [];
     var coordinates = routes[i].geometry.coordinates;
@@ -183,12 +185,14 @@ function parseRoutes(response, operatorObj) {
       operatorObj.polylines.push(p);
       google.maps.event.addListener(p, 'mouseover', routeInfoFunction(routes[i]));
       }
-    routeList[routes[i].onestop_id] = {
+    var r = {
       routes: routesArray,
       bounds: bounds,
       highlighted: false,
       stops: null
       };
+    routeList[routes[i].onestop_id] = r;
+    operatorObj.routeObjs.push(r);
     }
   }
 
@@ -339,6 +343,16 @@ function toggleOperatorFunction(id) {
     else {  // hide routes
       for (var i = 0; i < operatorObj.polylines.length; i++) {
         operatorObj.polylines[i].setMap(null);
+        }
+      if (operatorObj.routeObjs) {  // remove associated markers for all of operator's routes
+        for (var i = 0; i < operatorObj.routeObjs.length; i++) {
+          var stops = operatorObj.routeObjs[i].stops;
+          if (stops) {
+            for (var j = 0; j < stops.length; j++) {
+              stops[j].marker.setMap(null);
+              }
+            }
+          }
         }
       }
     }
