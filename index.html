@@ -60,6 +60,19 @@ var knownOperators = [];
 var operatorList = {};  // associative array, indexed by "onestop_id" for operators
 var routeList = {};  // associative array, indexed by "onestop_id" for routes
 
+function parameter(name) {
+  // return the value of parameter "name" in the URL's query string
+  var queryStr = window.location.href.substring(window.location.href.indexOf('?') + 1).split("&");
+  for (var i = 0; i < queryStr.length; i++) {
+    var param = queryStr[i].split('=');
+    if (param[0] == name) {
+      if (param.length > 1) {return param[1];}  // found
+      else                  {return "";}        // found, but has no value
+      }
+    }
+  return null;  // not found
+  }
+
 function initialize() {
   var styles = [
     {stylers: [{gamma: 1}]},
@@ -73,7 +86,7 @@ function initialize() {
     ];
   var mapOptions = {
     center: new google.maps.LatLng(38.8895, -77.0352),
-    zoom: 11,
+    zoom: 12,
     panControl: false,
     scrollwheel: false,
     streetViewControl: false,
@@ -87,13 +100,27 @@ function initialize() {
   map = new google.maps.Map(document.getElementById("map_canvas"), mapOptions);
   infowindow = new google.maps.InfoWindow({disableAutoPan: true});
   document.getElementById('control').onmouseover = function() {infowindow.close();};
-  var geoSuccess = function(position) {
-    map.setCenter(new google.maps.LatLng(position.coords.latitude, position.coords.longitude));
-    };
-  var geoError = function(error) {
-    console.log('getCurrentPosition error #' + error.code);
-    };
-  navigator.geolocation.getCurrentPosition(geoSuccess, geoError);
+  var homeParameter = parameter("home");
+  if (homeParameter) {
+    var homeCoords = homeParameter.replace(/\s/g, '').split(",");
+    if (homeCoords.length == 2) {
+      var lat = parseFloat(homeCoords[0]);
+      var lng = parseFloat(homeCoords[1]);
+      map.setCenter(new google.maps.LatLng(lat, lng));
+      }
+    else {
+      homeParameter = null;
+      }
+    }
+  if (!homeParameter) {
+    var geoSuccess = function(position) {
+      map.setCenter(new google.maps.LatLng(position.coords.latitude, position.coords.longitude));
+      };
+    var geoError = function(error) {
+      console.log('getCurrentPosition error #' + error.code);
+      };
+    navigator.geolocation.getCurrentPosition(geoSuccess, geoError);
+    }
   }
 
 function get(url) {
