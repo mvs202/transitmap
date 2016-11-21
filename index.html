@@ -10,6 +10,7 @@
 <style type="text/css">
 html {
   height: 100%;
+  overflow: hidden;
   }
 body {
   height: 100%;
@@ -48,6 +49,11 @@ a:hover {
   font-size: 85%;
   max-width: 400px;
   }
+#panoDiv {
+  width: 380px;
+  height: 220px;
+  display: block;
+  }
 #map_canvas {
   height: 100%
   }
@@ -59,6 +65,11 @@ var infowindow;
 var knownOperators = [];
 var operatorList = {};  // associative array, indexed by "onestop_id" for operators
 var routeList = {};  // associative array, indexed by "onestop_id" for routes
+var infowindowDiv;
+var infowindowText;
+var infowindowPano;
+var panorama;
+var panoFirstUse = true;
 
 function parameter(name) {
   // return the value of parameter "name" in the URL's query string
@@ -84,9 +95,10 @@ function initialize() {
     {featureType: "poi",                     elementType: "geometry",        stylers: [{color: "#9AD9E8"}]},
     {featureType: "transit.station.airport", elementType: "geometry.fill",   stylers: [{color: "#9AD9E8"}]}
     ];
+  var defaultLocation = new google.maps.LatLng(38.8895, -77.0352);  // Washington, DC
   var mapOptions = {
-    center: new google.maps.LatLng(38.8895, -77.0352),
-    zoom: 12,
+    center: defaultLocation,
+    zoom: 13,
     panControl: false,
     scrollwheel: false,
     streetViewControl: false,
@@ -98,7 +110,6 @@ function initialize() {
     styles: styles
     }
   map = new google.maps.Map(document.getElementById("map_canvas"), mapOptions);
-  infowindow = new google.maps.InfoWindow({disableAutoPan: true});
   document.getElementById('control').onmouseover = function() {infowindow.close();};
   var homeParameter = parameter("home");
   if (homeParameter) {
@@ -121,6 +132,17 @@ function initialize() {
       };
     navigator.geolocation.getCurrentPosition(geoSuccess, geoError);
     }
+  infowindowDiv = document.createElement("div");   // container for infowindow: hold text and pano object
+  infowindowText = document.createElement("div");  // holder for infowindow's text
+  infowindowPano = document.getElementById("panoDiv");  // initially in HTML's body object so it will initialize correctly
+  infowindowDiv.appendChild(infowindowText);
+  infowindow = new google.maps.InfoWindow({content: infowindowDiv, disableAutoPan: true});
+  panorama = new google.maps.StreetViewPanorama(infowindowPano, {
+    position: defaultLocation,
+    pov: {heading: 0, pitch: 0},
+    addressControl: false,
+    zoomControl: false
+    });
   }
 
 function get(url) {
@@ -128,8 +150,8 @@ function get(url) {
     var req = new XMLHttpRequest();
     req.open('GET', url);
     req.onload = function() {
-      if (req.status == 200) { resolve(req.response); }
-      else                   { reject(Error(req.statusText)); }
+      if (req.status == 200) {resolve(req.response); }
+      else                   {reject(Error(req.statusText)); }
       };
     req.onerror = function() {
       reject(Error("Network Error"));
@@ -296,18 +318,22 @@ function showStops(inputTag) {
 
 function stopInfoFunction(stop) {
   return function() {
-    var streetview = "https://maps.googleapis.com/maps/api/streetview?size=384x128&location=" +
-      stop.lat + "," + stop.lng + "&fov=120&key=AIzaSyAC2Gly8X2mFKSRkUrwLKMWQvUYS54QhsA";
     var routesUL = "<ul>";
     for (var i = 0; i < stop.routes.length; i++) {
       routesUL += "<li>&#9658; " + stop.routes[i] + "</li>";
       }
     routesUL += "</ul>";
     if (stop.routes.length > 1) console.log(stop.name + ": " + stop.routes.length)
-    var content = "<b>" + stop.name + "</b><p>" + routesUL + "<p><img src='" + streetview + "' width=384 height=128 >"
-    infowindow.setContent(content);
+    infowindowText.innerHTML = "<b>" + stop.name + "</b><p>" + routesUL;
+    infowindowPano.style.display = "block";
+    panorama.setOptions({position: {lat: stop.lat, lng: stop.lng}});
     infowindow.setOptions({pixelOffset: new google.maps.Size(0, -40)});
     infowindow.setPosition(stop.marker.getPosition());
+    if (panoFirstUse) {
+      // Avoid Google bug which needs object attached to body to initialize
+      infowindowDiv.appendChild(infowindowPano);
+      panoFirstUse = false;
+      }
     infowindow.open(map);
     }
   }
@@ -327,13 +353,13 @@ function routeInfoFunction(route) {
     else {
       var showstopsIsChecked = "";
       }
-    var content =
+    infowindowText.innerHTML =
       route.operated_by_name + "<br>" +
       route.name + " (" + route.vehicle_type + ")<br>" +
       "<label><input type=checkbox " + highlightIsChecked + "value='" + route.onestop_id + "' onclick='highlightRoute(this)'>highlight</label><br>" +
       "<label><input type=checkbox " + showstopsIsChecked + "value='" + route.onestop_id + "' onclick='showStops(this)''>show stops</label><br>" +
       "<button onclick=zoomToRoute('" + route.onestop_id + "')>zoom to route</button>";
-    infowindow.setContent(content);
+    infowindowPano.style.display = "none";
     infowindow.setOptions({pixelOffset: new google.maps.Size(0, 0)});
     infowindow.setPosition(event.latLng);
     infowindow.open(map);
@@ -408,6 +434,7 @@ function findTransit() {
   <button id="remove" onclick="removeUnchecked()" disabled>Remove unchecked</button><br>
   <ul id="systemList"></ul>
   </div>
+<div id=panoDiv ></div>
 <script src="https://maps.googleapis.com/maps/api/js?callback=initialize&key=AIzaSyAC2Gly8X2mFKSRkUrwLKMWQvUYS54QhsA" async defer></script>
 </body>
 </html>
