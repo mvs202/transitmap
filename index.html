@@ -48,6 +48,9 @@ a:hover {
   left: 0;
   font-size: 85%;
   max-width: 400px;
+  opacity: 0%;
+  display: none;
+  transition: opacity 1s;
   }
 #panoDiv {
   width: 380px;
@@ -70,6 +73,7 @@ var infowindowText;
 var infowindowPano;
 var panorama;
 var panoFirstUse = true;
+var autoFindTransit = false;  // whether to trigger "find transit" button on itialization
 
 function parameter(name) {
   // return the value of parameter "name" in the URL's query string
@@ -118,6 +122,7 @@ function initialize() {
       var lat = parseFloat(homeCoords[0]);
       var lng = parseFloat(homeCoords[1]);
       map.setCenter(new google.maps.LatLng(lat, lng));
+      autoFindTransit = true;
       }
     else {
       homeParameter = null;
@@ -142,6 +147,13 @@ function initialize() {
     pov: {heading: 0, pitch: 0},
     addressControl: false,
     zoomControl: false
+    });
+  google.maps.event.addListenerOnce(map, 'tilesloaded', function() {
+    if (autoFindTransit) {
+      findTransit();
+      }
+    document.getElementById("control").style.display = "block";
+    document.getElementById("control").style.opacity = 1.0;
     });
   }
 
